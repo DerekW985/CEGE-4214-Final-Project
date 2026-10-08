@@ -15,3 +15,9 @@ Possible choices to make
 Restrictions:  
     # of buses can't exced capacity  
     Cant assign more buses than are avalibale at a garage  
+
+
+GTFS Notes:  
+Metro Transit Resources: https://www.metrotransit.org/resources/gtfs-extensions/  
+Metro Transit & MVTA feeds (including archive): https://svc.metrotransit.org/  
+General GTFS Documentation: https://gtfs.org/documentation/overview/
