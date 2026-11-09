@@ -10,8 +10,8 @@ from typing import Dict, Union
 
 class MultiAgencyGTFSBlockParser:
     """
-    Parses GTFS feeds (.zip), processes vehicles.txt (with coach classification, agency 
-    reassignments, and additive overrides), and extracts parameters for Gurobi.
+    Parses GTFS feeds (.zip archives), processes vehicles.txt (with BRT and coach classification, 
+    agency reassignments, and additive overrides), and extracts parameters for Gurobi.
     """
 
     def __init__(self, config_path: Union[str, Path] = "config.yaml"):
@@ -22,12 +22,40 @@ class MultiAgencyGTFSBlockParser:
         self.blocks_df = pd.DataFrame()
         self.vehicles_df = pd.DataFrame()
         self.bus_count_df = pd.DataFrame()
+        self.garages_df = pd.DataFrame()
         
         self.set_B = []        # Set of blocks (B)
         self.set_T = []        # Set of time points (T)
         self.set_R = []        # Set of routes (R)
         self.a_bv = {}         # Vehicle compatibility parameter a_{b,v}
         self.fleet_counts = {} # Agency/Vehicle fleet counts
+
+        self._process_garage_config()
+
+    def _process_garage_config(self):
+        """Processes garage metadata (lat, lon, storage/maint capacities, EV chargers, vehicle compatibility)."""
+        garage_cfg = self.config.get('garages', {})
+        records = []
+
+        for g_name, g_data in garage_cfg.items():
+            storage_cap = int(g_data.get('storage_capacity', 0))
+            maint_cap = int(g_data.get('maintenance_capacity', 0))
+            total_cap = storage_cap + maint_cap
+            compat_vehicles = g_data.get('compatible_vehicle_types', self.config.get('vehicle_types', []))
+
+            records.append({
+                'garage_id': g_name,
+                'lat': float(g_data.get('lat', 0.0)),
+                'lon': float(g_data.get('lon', 0.0)),
+                'ev_chargers_x_g': int(g_data.get('ev_chargers', 0)),
+                'storage_capacity': storage_cap,
+                'maintenance_capacity': maint_cap,
+                'total_capacity_Q_g': total_cap,
+                'compatible_vehicle_types': "|".join(compat_vehicles),
+                'allowed_agencies': "|".join(g_data.get('operating_agencies', []))
+            })
+
+        self.garages_df = pd.DataFrame(records)
 
     @staticmethod
     def gtfs_time_to_minutes(time_str: str) -> float:
@@ -50,35 +78,41 @@ class MultiAgencyGTFSBlockParser:
         return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     def _classify_vehicle(self, row: pd.Series) -> str:
-        """Classifies a vehicles.txt record into configured vehicle types including coach buses."""
+        """Classifies a vehicles.txt record into vehicle types including BRT and Coach buses."""
         fuel = str(row.get('fuel', '')).lower()
         desc = str(row.get('vehicle_description', '')).lower()
         label = str(row.get('vehicle_label', '')).lower()
         low_floor_val = str(row.get('low_floor', '')).lower()
         is_high_floor = low_floor_val in ['false', '0', 'no'] or 'hfbus' in desc or 'subhf' in desc
 
-        rules = self.config.get('fleet_settings', {}).get('classification_keywords', {})
-        
-        # Explicit Coach check
-        if is_high_floor or any(kw in desc for kw in ['subhfbus', '40hfbus', 'suburban', 'coach']):
+        is_electric = 'electric' in fuel or 'ebrt' in desc or 'lfebus' in desc
+        is_artic = 'artic' in desc or '60ft' in desc or '60-foot' in desc
+        is_brt = 'brt' in desc or 'brt' in label
+        is_coach = is_high_floor or any(kw in desc for kw in ['subhfbus', '40hfbus', 'suburban', 'coach'])
+
+        if is_coach:
             return 'coach'
+        
+        if is_electric:
+            if is_artic and is_brt:
+                return '60ft_brt_electric'
+            elif is_artic:
+                return '60ft_electric'
+            elif is_brt:
+                return '60ft_brt_electric'
+            else:
+                return '40ft_electric'
 
-        for v_type, rule in rules.items():
-            fuel_keywords = rule.get('fuel_keywords', [])
-            desc_keywords = rule.get('desc_keywords', [])
+        if is_artic:
+            if is_brt:
+                return '60ft_brt_artic'
+            else:
+                return '60ft_artic'
 
-            fuel_match = any(kw in fuel for kw in fuel_keywords) if fuel_keywords else True
-            desc_match = any(kw in desc or kw in label for kw in desc_keywords) if desc_keywords else True
-            
-            if fuel_keywords and desc_keywords:
-                if fuel_match and desc_match:
-                    return v_type
-            elif fuel_keywords and fuel_match:
-                return v_type
-            elif desc_keywords and desc_match:
-                return v_type
+        if is_brt:
+            return '40ft_brt'
 
-        return self.config['vehicle_types'][0]
+        return '40ft_diesel'
 
     def _load_feed(self, feed_cfg: dict) -> tuple:
         """Loads and filters a GTFS zip file, parsing schedules, agencies, and vehicles.txt."""
@@ -103,7 +137,6 @@ class MultiAgencyGTFSBlockParser:
             if 'vehicles.txt' in z.namelist():
                 feed_vehicles = pd.read_csv(z.open('vehicles.txt'), dtype=str)
 
-        # Standardize agency_id
         if 'agency_id' not in routes.columns and not agency_df.empty:
             routes['agency_id'] = agency_df['agency_id'].iloc[0]
         elif 'agency_id' not in routes.columns:
@@ -117,7 +150,6 @@ class MultiAgencyGTFSBlockParser:
         routes['scoped_agency_id'] = prefix + "_" + routes['agency_id'].astype(str)
         routes['agency_name'] = routes['agency_name'].fillna(prefix)
 
-        # Parse vehicles.txt if present
         if not feed_vehicles.empty:
             if 'agency_id' not in feed_vehicles.columns:
                 feed_vehicles['agency_id'] = routes['agency_id'].iloc[0]
@@ -125,7 +157,6 @@ class MultiAgencyGTFSBlockParser:
             feed_vehicles['feed_prefix'] = prefix
             feed_vehicles['vehicle_type'] = feed_vehicles.apply(self._classify_vehicle, axis=1)
 
-            # Apply Label Prefix Agency Reassignment
             prefix_reassign = self.config.get('fleet_settings', {}).get('label_prefix_agency_reassignment', {})
             if prefix_reassign:
                 def reassign_agency(row):
@@ -137,7 +168,6 @@ class MultiAgencyGTFSBlockParser:
                 
                 feed_vehicles['scoped_agency_id'] = feed_vehicles.apply(reassign_agency, axis=1)
 
-        # Apply Filters (route_type = 3 for bus, ignore_route_ids, ignore_agency_ids)
         routes['route_type'] = routes['route_type'].astype(int)
         keep_types = self.config['filters'].get('keep_route_types', [3])
         ignore_route_ids = set(str(r) for r in self.config['filters'].get('ignore_route_ids', []))
@@ -174,7 +204,7 @@ class MultiAgencyGTFSBlockParser:
         return df, feed_vehicles
 
     def process_all_feeds(self) -> pd.DataFrame:
-        """Processes GTFS feeds, calculates block parameters, and applies fleet count overrides."""
+        """Processes GTFS feeds, calculates block parameters, and aggregates fleet/garage parameters."""
         all_schedule_frames = []
         all_vehicle_frames = []
 
@@ -277,25 +307,23 @@ class MultiAgencyGTFSBlockParser:
                 for v_type, count in counts.items():
                     self.fleet_counts[(agency_id, v_type)] = count
 
-        # Apply Specific Quantity Reassignments (reassign_agency_buses)
-        reassignments = fleet_settings.get('reassign_agency_buses', [])
+        reassignments = fleet_settings.get('reassign_agency_buses', []) or []
         for r in reassignments:
-            src = (r['from_agency'], r['vehicle_type'])
-            dst = (r['to_agency'], r['vehicle_type'])
+            src = (r.get('from_agency'), r.get('vehicle_type'))
+            dst = (r.get('to_agency'), r.get('vehicle_type'))
             count_to_move = int(r.get('count', 0))
-            
-            actual_move = min(count_to_move, self.fleet_counts.get(src, 0))
-            self.fleet_counts[src] = self.fleet_counts.get(src, 0) - actual_move
-            self.fleet_counts[dst] = self.fleet_counts.get(dst, 0) + actual_move
+            if count_to_move > 0:
+                actual_move = min(count_to_move, self.fleet_counts.get(src, 0))
+                self.fleet_counts[src] = self.fleet_counts.get(src, 0) - actual_move
+                self.fleet_counts[dst] = self.fleet_counts.get(dst, 0) + actual_move
 
-        # Apply Additive Fleet Overrides (additive_fleet_overrides)
-        additive = fleet_settings.get('additive_fleet_overrides', {})
+        additive = fleet_settings.get('additive_fleet_overrides', {}) or {}
         for agency_id, counts in additive.items():
-            for v_type, extra_count in counts.items():
-                key = (agency_id, v_type)
-                self.fleet_counts[key] = self.fleet_counts.get(key, 0) + int(extra_count)
+            if counts:
+                for v_type, extra_count in counts.items():
+                    key = (agency_id, v_type)
+                    self.fleet_counts[key] = self.fleet_counts.get(key, 0) + int(extra_count)
 
-        # Build Export Dataframe for bus_count.csv
         fleet_records = []
         for (agency_id, v_type), count in self.fleet_counts.items():
             if count > 0:
@@ -318,6 +346,12 @@ class MultiAgencyGTFSBlockParser:
             self.bus_count_df.to_csv(filename, index=False)
         return self.bus_count_df
 
+    def export_garage_parameters(self, filename: str = "garage_parameters.csv") -> pd.DataFrame:
+        """Exports garage parameters (lat/lon, total capacities, EV chargers, vehicle filters) to CSV."""
+        if not self.garages_df.empty:
+            self.garages_df.to_csv(filename, index=False)
+        return self.garages_df
+
     def get_osrm_endpoints(self) -> pd.DataFrame:
         """Returns block start and end coordinates for OSRM matrix calculations."""
         return self.blocks_df[['block_id', 'feed_prefix', 'scoped_agency_id', 'agency_name', 'start_lat', 'start_lon', 'end_lat', 'end_lon', 'start_time', 'end_time']].copy()
@@ -329,8 +363,10 @@ class MultiAgencyGTFSBlockParser:
             'T': self.set_T,
             'R': self.set_R,
             'V': self.config['vehicle_types'],
+            'G': list(self.config.get('garages', {}).keys()),
             'a_bv': self.a_bv,
             'fleet_counts_n_v': self.fleet_counts,
+            'garages': self.config.get('garages', {}),
             'l_b': dict(zip(self.blocks_df['block_id'], self.blocks_df['revenue_miles_l_b'])),
             'agency_b': dict(zip(self.blocks_df['block_id'], self.blocks_df['scoped_agency_id'])),
             'agency_name_b': dict(zip(self.blocks_df['block_id'], self.blocks_df['agency_name'])),
@@ -343,7 +379,7 @@ class MultiAgencyGTFSBlockParser:
 # ==============================================================================
 if __name__ == "__main__":
     print("==================================================")
-    print(" Running Multi-Agency GTFS & Vehicle Parser ")
+    print(" Running Multi-Agency GTFS & Garage Parser ")
     print("==================================================\n")
 
     try:
@@ -352,25 +388,28 @@ if __name__ == "__main__":
         gurobi_data = parser.get_gurobi_dict()
         osrm_df = parser.get_osrm_endpoints()
         bus_count_df = parser.export_fleet_counts("bus_count.csv")
+        garages_df = parser.export_garage_parameters("garage_parameters.csv")
 
         # Save exports
         osrm_df.to_csv("block_endpoints_osrm.csv", index=False)
         blocks_df.to_csv("gurobi_block_parameters.csv", index=False)
 
-        print("✔ Successfully parsed GTFS schedule and vehicle feeds:")
+        print("✔ Successfully parsed GTFS schedule, vehicle, and garage data:")
         print(f"  • Total Combined Blocks (|B|): {len(gurobi_data['B'])}")
         print(f"  • Total Time Points (|T|): {len(gurobi_data['T'])}")
         print(f"  • Total Routes (|R|): {len(gurobi_data['R'])}")
+        print(f"  • Total Garages (|G|): {len(gurobi_data['G'])}")
         print(f"  • Vehicle Types (|V|): {gurobi_data['V']}\n")
 
-        print("Fleet Size Summary (bus_count.csv):")
-        if not bus_count_df.empty:
-            print(bus_count_df.to_string(index=False))
+        print("Garage Configuration Summary (garage_parameters.csv):")
+        if not garages_df.empty:
+            print(garages_df[['garage_id', 'storage_capacity', 'maintenance_capacity', 'total_capacity_Q_g', 'compatible_vehicle_types']].to_string(index=False))
 
         print(f"\n✔ Saved exports:")
         print("  1. block_endpoints_osrm.csv")
         print("  2. gurobi_block_parameters.csv")
-        print("  3. bus_count.csv\n")
+        print("  3. bus_count.csv")
+        print("  4. garage_parameters.csv\n")
 
     except Exception as e:
         print(f"✖ Execution note: {e}")

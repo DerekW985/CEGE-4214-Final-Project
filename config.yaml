@@ -7,115 +7,169 @@ gtfs_feeds:
   - feed_prefix: "MVTA"
     path: "MVTA_11-8-2026.zip"
 
-# 2. Regional Agency Mapping & Allowed Garages
+# 2. Regional Agency Mapping
 agencies:
   "MT_0":
     name: "Metro Transit"
-    allowed_garages: ["Heywood", "Fred_T_Heywood", "East_Metro", "South_Garage"]
   "MT_1":
     name: "Metro Transit/Met Council"
-    allowed_garages: ["Heywood", "Fred_T_Heywood", "East_Metro", "South_Garage"]
   "MT_2":
-    name: "Met Council"
-    allowed_garages: ["Heywood", "East_Metro"]
+    name: "Met Council (First Transit Contracted)"
   "MT_4":
     name: "Maple Grove"
-    allowed_garages: ["Maple_Grove_Transit_Station"]
   "MT_5":
     name: "Plymouth"
-    allowed_garages: ["Plymouth_Maintenance_Facility"]
   "MT_6":
     name: "SouthWest Transit"
-    allowed_garages: ["SouthWest_Garage"]
   "MT_10":
     name: "Airport (MAC)"
-    allowed_garages: ["MAC_Garage"]
   "MT_11":
     name: "University of Minnesota"
-    allowed_garages: ["UofM_Transit_Facility"]
   "MVTA_0":
     name: "MVTA"
-    allowed_garages: ["Eagan_Garage", "Burnsville_Garage"]
 
-# 3. Filtering Rules
+# 3. Garage Configuration
+garages:
+  "Nicollet":
+    lat: 44.9015
+    lon: -93.2778
+    ev_chargers: 10
+    storage_capacity: 150
+    maintenance_capacity: 20
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "40ft_electric"]
+    operating_agencies: ["MT_0", "MT_1"]
+
+  "Heywood":
+    lat: 44.9781
+    lon: -93.2878
+    ev_chargers: 15
+    storage_capacity: 210
+    maintenance_capacity: 30
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    operating_agencies: ["MT_0", "MT_1", "MT_2"]
+
+  "Fred_T_Heywood":
+    lat: 44.9785
+    lon: -93.2885
+    ev_chargers: 20
+    storage_capacity: 175
+    maintenance_capacity: 25
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    operating_agencies: ["MT_0", "MT_1"]
+
+  "East_Metro":
+    lat: 44.9535
+    lon: -93.0762
+    ev_chargers: 10
+    storage_capacity: 160
+    maintenance_capacity: 20
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    operating_agencies: ["MT_0", "MT_1", "MT_2"]
+
+  "South_Garage":
+    lat: 44.8710
+    lon: -93.2890
+    ev_chargers: 12
+    storage_capacity: 190
+    maintenance_capacity: 25
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    operating_agencies: ["MT_0", "MT_1"]
+
+  "Eagan_Garage":
+    lat: 44.8150
+    lon: -93.1700
+    ev_chargers: 8
+    storage_capacity: 120
+    maintenance_capacity: 15
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "coach"]
+    operating_agencies: ["MVTA_0"]
+
+  "SouthWest_Garage":
+    lat: 44.8620
+    lon: -93.4750
+    ev_chargers: 5
+    storage_capacity: 75
+    maintenance_capacity: 10
+    compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
+    operating_agencies: ["MT_6"]
+
+# 4. Filtering Rules
 filters:
   keep_route_types: [3]               # GTFS route_type: 3 = Bus
   ignore_route_ids: ["901", "902"]    # Exclude LRT Lines 901/902
   ignore_agency_ids: ["MT_10"]
 
-# 4. Vehicle Types Defined for Model (Set V)
+# 5. Vehicle Types Defined for Model (Set V)
 vehicle_types:
   - "40ft_diesel"
+  - "40ft_brt"
   - "60ft_artic"
+  - "60ft_brt_artic"
   - "40ft_electric"
   - "60ft_electric"
-  - "coach"                           # High-floor suburban / express coach buses
+  - "60ft_brt_electric"
+  - "coach"
 
-# 5. Fleet Settings & Vehicles.txt Classification Rules
+# 6. Fleet Settings & Vehicles.txt Classification Rules
 fleet_settings:
-  use_gtfs_fleet_counts: true        # Parse counts from vehicles.txt in GTFS feeds
+  use_gtfs_fleet_counts: true
 
-  # Classification rules for vehicles.txt records (fuel, vehicle_description, low_floor)
   classification_keywords:
+    "60ft_brt_electric":
+      fuel_keywords: ["electric"]
+      desc_keywords: ["articebrtlfbus", "ebrt"]
     "60ft_electric":
       fuel_keywords: ["electric"]
-      desc_keywords: ["artic", "60ft", "ebrt"]
+      desc_keywords: ["artic", "60ft"]
     "40ft_electric":
       fuel_keywords: ["electric"]
       desc_keywords: ["40lfebus", "lfe"]
     "coach":
       fuel_keywords: []
       desc_keywords: ["subhfbus", "40hfbus", "suburban", "coach"]
-      require_high_floor: true        # Triggers if low_floor == False
+      require_high_floor: true
+    "60ft_brt_artic":
+      fuel_keywords: ["biodiesel", "diesel"]
+      desc_keywords: ["articbrtlfbus", "articbrt"]
+    "40ft_brt":
+      fuel_keywords: ["biodiesel", "diesel"]
+      desc_keywords: ["40brtlfbus", "40brt"]
     "60ft_artic":
       fuel_keywords: ["biodiesel", "diesel"]
       desc_keywords: ["artic", "60ft"]
     "40ft_diesel":
       fuel_keywords: ["biodiesel", "diesel"]
-      desc_keywords: ["40lf", "40brt"]
+      desc_keywords: ["40lf"]
 
-  # Reassign buses in vehicles.txt to opt-out agencies based on vehicle_label prefix
   label_prefix_agency_reassignment:
-    "SW-": "MT_6"                     # SouthWest Transit
-    "PL-": "MT_5"                     # Plymouth Transit
-    "FS-": "MT_4"                     # Maple Grove / First Transit Contracted
+    "SW-": "MT_6"
+    "PL-": "MT_5"
+    "FS-": "MT_2"
 
-  # Specific Quantity Reassignment (Move N buses of vehicle_type from agency A to B)
-  reassign_agency_buses:
-    - from_agency: "MT_0"
-      to_agency: "MT_6"
-      vehicle_type: "coach"
-      count: 10
-    - from_agency: "MT_0"
-      to_agency: "MT_4"
-      vehicle_type: "coach"
-      count: 5
+  reassign_agency_buses: []
+  additive_fleet_overrides: {}
 
-  # Additive Fleet Overrides (+N extra buses added to agency fleet)
-  additive_fleet_overrides:
-    "MT_0":
-      "40ft_electric": 5              # Add 5 extra 40ft electric buses
-    "MVTA_0":
-      "coach": 12                     # Add 12 extra coach buses
-
-  # Fallback manual counts if vehicles.txt is absent
   manual_agency_fleet_counts:
     "MT_0":
-      "40ft_diesel": 350
-      "60ft_artic": 120
+      "40ft_diesel": 300
+      "40ft_brt": 40
+      "60ft_artic": 100
+      "60ft_brt_artic": 50
       "coach": 40
       "40ft_electric": 20
       "60ft_electric": 10
+      "60ft_brt_electric": 10
     "MVTA_0":
       "40ft_diesel": 85
       "coach": 25
 
-# 6. Route-to-Vehicle Compatibility Rules
+# 7. Route-to-Vehicle Compatibility Rules (BRT Routes require BRT Fleet)
 default_vehicle_compatibility: ["40ft_diesel", "40ft_electric", "coach"]
 
 route_vehicle_overrides:
-  "5": ["60ft_artic", "60ft_electric"]
-  "C_LINE": ["60ft_artic", "60ft_electric"]
-  "D_LINE": ["60ft_artic", "60ft_electric"]
+  "5": ["60ft_brt_artic", "60ft_brt_electric"]
+  "C_LINE": ["60ft_brt_artic", "60ft_brt_electric"]
+  "D_LINE": ["60ft_brt_artic", "60ft_brt_electric"]
+  "A_LINE": ["40ft_brt", "60ft_brt_artic"]
 
 ev_max_block_miles: 150.0
