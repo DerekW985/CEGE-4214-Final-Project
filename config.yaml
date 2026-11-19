@@ -31,62 +31,62 @@ agencies:
 # 3. Garage Configuration
 garages:
   "Nicollet":
-    lat: 44.9015
-    lon: -93.2778
+    lat: 44.9448
+    lon: -93.2790
     ev_chargers: 10
-    storage_capacity: 150
-    maintenance_capacity: 20
+    storage_capacity: 146
+    maintenance_capacity: 16
     compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "40ft_electric"]
     operating_agencies: ["MT_0", "MT_1"]
 
   "Heywood":
-    lat: 44.9781
-    lon: -93.2878
+    lat: 44.9853
+    lon: -93.2826
     ev_chargers: 15
-    storage_capacity: 210
-    maintenance_capacity: 30
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    storage_capacity: 194
+    maintenance_capacity: 20
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
     operating_agencies: ["MT_0", "MT_1", "MT_2"]
 
-  "Fred_T_Heywood":
-    lat: 44.9785
-    lon: -93.2885
+  "North_Loop":
+    lat: 44.9880
+    lon: -93.2874
     ev_chargers: 20
-    storage_capacity: 175
-    maintenance_capacity: 25
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    storage_capacity: 192
+    maintenance_capacity: 24
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
     operating_agencies: ["MT_0", "MT_1"]
 
   "East_Metro":
-    lat: 44.9535
-    lon: -93.0762
+    lat: 44.9643
+    lon: -93.0879
     ev_chargers: 10
-    storage_capacity: 160
-    maintenance_capacity: 20
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    storage_capacity: 174
+    maintenance_capacity: 24
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
     operating_agencies: ["MT_0", "MT_1", "MT_2"]
 
   "South_Garage":
-    lat: 44.8710
-    lon: -93.2890
+    lat: 44.8631
+    lon: -93.2435
     ev_chargers: 12
-    storage_capacity: 190
-    maintenance_capacity: 25
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric"]
+    storage_capacity: 107
+    maintenance_capacity: 16
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
     operating_agencies: ["MT_0", "MT_1"]
 
   "Eagan_Garage":
-    lat: 44.8150
-    lon: -93.1700
+    lat: 44.8266
+    lon: -93.2015
     ev_chargers: 8
-    storage_capacity: 120
-    maintenance_capacity: 15
+    storage_capacity: 100
+    maintenance_capacity: 11
     compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "coach"]
     operating_agencies: ["MVTA_0"]
 
   "SouthWest_Garage":
-    lat: 44.8620
-    lon: -93.4750
+    lat: 44.8905
+    lon: -93.4602
     ev_chargers: 5
     storage_capacity: 75
     maintenance_capacity: 10
