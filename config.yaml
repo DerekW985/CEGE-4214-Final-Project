@@ -100,7 +100,16 @@ garages:
     storage_capacity: 59
     maintenance_capacity: 0
     compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
-    operating_agencies: ["MT_2", "MT_5"]
+    operating_agencies: ["MT_1", "MT_2", "MT_5"]
+
+    "FT_Burnsville":
+    lat: 44.7770
+    lon: -93.3211
+    ev_chargers: 0
+    storage_capacity: 70
+    maintenance_capacity: 0
+    compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
+    operating_agencies: ["MT_1", "MT_2", "MT_5"]
 
 # 4. Filtering Rules
 filters:
