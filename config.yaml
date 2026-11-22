@@ -100,7 +100,25 @@ garages:
     storage_capacity: 59
     maintenance_capacity: 0
     compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
-    operating_agencies: ["MT_2", "MT_5"]
+    operating_agencies: ["MT_1", "MT_2", "MT_5"]
+
+    "FT_Burnsville":
+    lat: 44.7770
+    lon: -93.3211
+    ev_chargers: 0
+    storage_capacity: 70
+    maintenance_capacity: 0
+    compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
+    operating_agencies: ["MT_1", "MT_2", "MT_5"]
+
+   "FT_Spring":
+    lat: 44.9949
+    lon: -93.2135
+    ev_chargers: 0
+    storage_capacity: 40
+    maintenance_capacity: 0
+    compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
+    operating_agencies: ["MT_1", "MT_2", "MT_5"]
 
 # 4. Filtering Rules
 filters:
@@ -110,6 +128,7 @@ filters:
 
 # 5. Vehicle Types Defined for Model (Set V)
 vehicle_types:
+  - "30ft_diesel"
   - "40ft_diesel"
   - "40ft_brt"
   - "60ft_artic"
@@ -118,6 +137,7 @@ vehicle_types:
   - "60ft_electric"
   - "60ft_brt_electric"
   - "coach"
+  - "cutaway"
 
 # 6. Fleet Settings & Vehicles.txt Classification Rules
 fleet_settings:
@@ -149,6 +169,12 @@ fleet_settings:
     "40ft_diesel":
       fuel_keywords: ["biodiesel", "diesel"]
       desc_keywords: ["40lf"]
+    "30ft_diesel":
+      fuel_keywords: ["biodiesel", "diesel"]
+      desc_keywords: ["30lf"]
+    "cutaway":
+      fuel_keywords: ["biodiesel", "diesel"]
+      desc_keywords: ["cutaway"]
 
   label_prefix_agency_reassignment:
     "SW-": "MT_6"
