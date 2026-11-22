@@ -45,7 +45,7 @@ garages:
     ev_chargers: 15
     storage_capacity: 194
     maintenance_capacity: 20
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric", "coach"]
     operating_agencies: ["MT_0", "MT_4"]
 
   "North_Loop":
@@ -54,7 +54,7 @@ garages:
     ev_chargers: 20
     storage_capacity: 192
     maintenance_capacity: 24
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric", "coach"]
     operating_agencies: ["MT_0"]
 
   "East_Metro":
@@ -63,7 +63,7 @@ garages:
     ev_chargers: 10
     storage_capacity: 174
     maintenance_capacity: 24
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric", "coach"]
     operating_agencies: ["MT_0"]
 
   "South_Garage":
@@ -72,7 +72,7 @@ garages:
     ev_chargers: 12
     storage_capacity: 107
     maintenance_capacity: 16
-    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric","coach"]
+    compatible_vehicle_types: ["40ft_diesel", "40ft_brt", "60ft_artic", "60ft_brt_artic", "40ft_electric", "60ft_electric", "60ft_brt_electric", "coach"]
     operating_agencies: ["MT_0"]
 
   "Eagan_Garage":
@@ -93,7 +93,7 @@ garages:
     compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
     operating_agencies: ["MT_6"]
 
-    "FT_Como":
+  "FT_Como":
     lat: 44.9876
     lon: -93.2090
     ev_chargers: 0
@@ -102,7 +102,7 @@ garages:
     compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
     operating_agencies: ["MT_1", "MT_2", "MT_5"]
 
-    "FT_Burnsville":
+  "FT_Burnsville":
     lat: 44.7770
     lon: -93.3211
     ev_chargers: 0
@@ -111,7 +111,7 @@ garages:
     compatible_vehicle_types: ["40ft_diesel", "60ft_artic", "coach"]
     operating_agencies: ["MT_1", "MT_2", "MT_5"]
 
-   "FT_Spring":
+  "FT_Spring":
     lat: 44.9949
     lon: -93.2135
     ev_chargers: 0
@@ -124,7 +124,7 @@ garages:
 filters:
   keep_route_types: [3]               # GTFS route_type: 3 = Bus
   ignore_route_ids: ["901", "902"]    # Exclude LRT Lines 901/902
-  ignore_agency_ids: ["MT_1","MT_4","MT_6","MT_10", "MT_11", "MVTA_0"]
+  ignore_agency_ids: ["MT_1", "MT_4", "MT_6", "MT_10", "MT_11", "MVTA_0"]
 
 # 5. Vehicle Types Defined for Model (Set V)
 vehicle_types:
@@ -182,7 +182,9 @@ fleet_settings:
     "FS-": "MT_2"
 
   reassign_agency_buses: []
-  additive_fleet_overrides: {}
+  additive_fleet_overrides:
+    "MT_2":
+      "40ft_diesel": 5
 
   manual_agency_fleet_counts:
     "MT_0":
