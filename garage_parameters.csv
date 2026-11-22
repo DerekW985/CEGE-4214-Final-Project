@@ -1,8 +1,8 @@
 garage_id,lat,lon,ev_chargers_x_g,storage_capacity,maintenance_capacity,total_capacity_Q_g,compatible_vehicle_types,allowed_agencies
-Nicollet,44.9015,-93.2778,10,150,20,170,40ft_diesel|40ft_brt|40ft_electric,MT_0|MT_1
-Heywood,44.9781,-93.2878,15,210,30,240,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric,MT_0|MT_1|MT_2
-Fred_T_Heywood,44.9785,-93.2885,20,175,25,200,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric,MT_0|MT_1
-East_Metro,44.9535,-93.0762,10,160,20,180,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric,MT_0|MT_1|MT_2
-South_Garage,44.871,-93.289,12,190,25,215,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric,MT_0|MT_1
-Eagan_Garage,44.815,-93.17,8,120,15,135,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|coach,MVTA_0
-SouthWest_Garage,44.862,-93.475,5,75,10,85,40ft_diesel|60ft_artic|coach,MT_6
+Nicollet,44.9448,-93.279,10,146,16,162,40ft_diesel|40ft_brt|40ft_electric,MT_0
+Heywood,44.9853,-93.2826,15,194,20,214,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric|coach,MT_0|MT_4
+North_Loop,44.988,-93.2874,20,192,24,216,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric|coach,MT_0
+East_Metro,44.9643,-93.0879,10,174,24,198,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric|coach,MT_0
+South_Garage,44.8631,-93.2435,12,107,16,123,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|60ft_electric|60ft_brt_electric|coach,MT_0
+Eagan_Garage,44.8266,-93.2015,8,100,11,111,40ft_diesel|40ft_brt|60ft_artic|60ft_brt_artic|40ft_electric|coach,MVTA_0
+SouthWest_Garage,44.9876,-93.209,0,59,0,59,40ft_diesel|60ft_artic|coach,MT_2|MT_5
