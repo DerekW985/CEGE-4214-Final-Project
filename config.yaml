@@ -122,9 +122,19 @@ garages:
 
 # 4. Filtering Rules
 filters:
+  service_date: "20261014"            # Target YYYYMMDD date (Wednesday) so Weekday/Weekend trips do not mix
+  service_day: "wednesday"            # Fallback day-of-week if service_date is omitted
   keep_route_types: [3]               # GTFS route_type: 3 = Bus
   ignore_route_ids: ["901", "902"]    # Exclude LRT Lines 901/902
-  ignore_agency_ids: ["MT_1", "MT_2", "MT_4", "MT_5", "MT_6", "MT_10", "MT_11", "MVTA_0"]
+  ignore_agency_ids:
+    - "MT_1"
+    - "MT_2"
+    - "MT_4"
+    - "MT_5"
+    - "MT_6"
+    - "MT_10"
+    - "MT_11"
+    - "MVTA_0"
 
 # 5. Vehicle Types Defined for Model (Set V)
 vehicle_types:
@@ -141,7 +151,7 @@ vehicle_types:
 
 # 6. Fleet Settings & Vehicles.txt Classification Rules
 fleet_settings:
-  use_gtfs_fleet_counts: false
+  use_gtfs_fleet_counts: false        # Set false to use manual_agency_fleet_counts below
 
   classification_keywords:
     "60ft_brt_electric":
@@ -181,8 +191,13 @@ fleet_settings:
     "PL-": "MT_5"
     "FS-": "MT_2"
 
+  # Exact count overrides (works even if use_gtfs_fleet_counts is switched back to true)
+  fleet_count_overrides:
+
   reassign_agency_buses: []
+
   additive_fleet_overrides:
+
 
   manual_agency_fleet_counts:
     "MT_0":
@@ -194,9 +209,6 @@ fleet_settings:
       "40ft_electric": 20
       "60ft_electric": 0
       "60ft_brt_electric": 13
-    "MVTA_0":
-      "40ft_diesel": 85
-      "coach": 25
 
 # 7. Route-to-Vehicle Compatibility Rules (BRT Routes require BRT Fleet)
 default_vehicle_compatibility: ["40ft_diesel", "40ft_electric"]

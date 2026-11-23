@@ -1,3 +1,4 @@
+import datetime
 import math
 import tempfile
 import zipfile
@@ -5,7 +6,7 @@ import yaml
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Set, Tuple, Union
 
 
 class MultiAgencyGTFSBlockParser:
@@ -16,7 +17,7 @@ class MultiAgencyGTFSBlockParser:
 
     def __init__(self, config_path: Union[str, Path] = "config.yaml"):
         self.config_path = Path(config_path)
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path, 'r', encoding='utf-8') as f:
             self.config = yaml.safe_load(f)
 
         self.blocks_df = pd.DataFrame()
@@ -77,6 +78,63 @@ class MultiAgencyGTFSBlockParser:
              math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
         return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
+    def _get_active_service_ids(
+        self,
+        calendar_df: pd.DataFrame,
+        calendar_dates_df: pd.DataFrame,
+    ) -> Tuple[Set[str], str]:
+        """Resolves active GTFS service_ids for a single target date or day-of-week."""
+        day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+        filters_cfg = self.config.get('filters', {})
+        service_date = filters_cfg.get('service_date', None)
+        service_day = str(filters_cfg.get('service_day', 'wednesday')).lower().strip()
+
+        active_ids: Set[str] = set()
+
+        # If no explicit service_date is provided, pick a representative date from the feed matching service_day
+        if not service_date:
+            if not calendar_df.empty and service_day in calendar_df.columns:
+                matching_cal = calendar_df[calendar_df[service_day].astype(str) == "1"]
+                if not matching_cal.empty:
+                    start_dt = datetime.datetime.strptime(str(matching_cal['start_date'].min()), "%Y%m%d")
+                    end_dt = datetime.datetime.strptime(str(matching_cal['end_date'].max()), "%Y%m%d")
+                    target_idx = day_names.index(service_day)
+                    cur = start_dt + datetime.timedelta(days=(end_dt - start_dt).days // 2)
+                    while cur.weekday() != target_idx and cur <= end_dt:
+                        cur += datetime.timedelta(days=1)
+                    service_date = cur.strftime("%Y%m%d")
+            elif not calendar_dates_df.empty:
+                cd_add = calendar_dates_df[calendar_dates_df['exception_type'].astype(str) == "1"].copy()
+                if not cd_add.empty:
+                    cd_add['dow'] = pd.to_datetime(cd_add['date'], format="%Y%m%d").dt.dayofweek.map(lambda i: day_names[i])
+                    matching_cd = cd_add[cd_add['dow'] == service_day]
+                    if not matching_cd.empty:
+                        service_date = str(matching_cd['date'].value_counts().idxmax())
+
+        if service_date:
+            date_str = str(service_date)
+            dt = datetime.datetime.strptime(date_str, "%Y%m%d")
+            dow_name = day_names[dt.weekday()]
+
+            if not calendar_df.empty and dow_name in calendar_df.columns:
+                cal = calendar_df[
+                    (calendar_df['start_date'].astype(str) <= date_str)
+                    & (calendar_df['end_date'].astype(str) >= date_str)
+                    & (calendar_df[dow_name].astype(str) == "1")
+                ]
+                active_ids.update(cal['service_id'].astype(str).tolist())
+
+            if not calendar_dates_df.empty:
+                cd = calendar_dates_df[calendar_dates_df['date'].astype(str) == date_str]
+                added = cd[cd['exception_type'].astype(str) == "1"]['service_id'].astype(str).tolist()
+                removed = set(cd[cd['exception_type'].astype(str) == "2"]['service_id'].astype(str).tolist())
+                active_ids.update(added)
+                active_ids -= removed
+
+            return active_ids, f"{date_str} ({dow_name})"
+
+        return active_ids, "ALL (no calendar filter)"
+
     def _classify_vehicle(self, row: pd.Series) -> str:
         """Classifies a vehicles.txt record into vehicle types including BRT and Coach buses."""
         fuel = str(row.get('fuel', '')).lower()
@@ -124,18 +182,27 @@ class MultiAgencyGTFSBlockParser:
             return pd.DataFrame(), pd.DataFrame()
 
         with zipfile.ZipFile(zip_path, 'r') as z:
+            namelist = set(z.namelist())
             trips = pd.read_csv(z.open('trips.txt'), dtype=str)
             stop_times = pd.read_csv(z.open('stop_times.txt'), dtype=str)
             stops = pd.read_csv(z.open('stops.txt'), dtype=str)
             routes = pd.read_csv(z.open('routes.txt'), dtype=str)
 
             agency_df = pd.DataFrame()
-            if 'agency.txt' in z.namelist():
+            if 'agency.txt' in namelist:
                 agency_df = pd.read_csv(z.open('agency.txt'), dtype=str)
 
             feed_vehicles = pd.DataFrame()
-            if 'vehicles.txt' in z.namelist():
+            if 'vehicles.txt' in namelist:
                 feed_vehicles = pd.read_csv(z.open('vehicles.txt'), dtype=str)
+
+            calendar_df = pd.DataFrame()
+            if 'calendar.txt' in namelist:
+                calendar_df = pd.read_csv(z.open('calendar.txt'), dtype=str)
+
+            calendar_dates_df = pd.DataFrame()
+            if 'calendar_dates.txt' in namelist:
+                calendar_dates_df = pd.read_csv(z.open('calendar_dates.txt'), dtype=str)
 
         if 'agency_id' not in routes.columns and not agency_df.empty:
             routes['agency_id'] = agency_df['agency_id'].iloc[0]
@@ -167,6 +234,15 @@ class MultiAgencyGTFSBlockParser:
                     return row['scoped_agency_id']
                 
                 feed_vehicles['scoped_agency_id'] = feed_vehicles.apply(reassign_agency, axis=1)
+
+        # Filter by service_id (single day schedule so Weekday/Saturday/Sunday trips do not mix)
+        total_raw_trips = len(trips)
+        active_service_ids, date_label = self._get_active_service_ids(calendar_df, calendar_dates_df)
+        if active_service_ids and 'service_id' in trips.columns:
+            trips = trips[trips['service_id'].astype(str).isin(active_service_ids)].copy()
+            print(f"  ✔ [{prefix}] Service Date {date_label}: {len(active_service_ids)} active service_ids -> {len(trips)}/{total_raw_trips} trips.")
+        elif 'service_id' in trips.columns and (not calendar_df.empty or not calendar_dates_df.empty):
+            print(f"  [WARN] [{prefix}] No matching service_ids found for {date_label}; keeping all {total_raw_trips} trips.")
 
         routes['route_type'] = routes['route_type'].astype(int)
         keep_types = self.config['filters'].get('keep_route_types', [3])
@@ -293,19 +369,30 @@ class MultiAgencyGTFSBlockParser:
         self.set_T = sorted(list(time_points))
 
         # --- PROCESS FLEET COUNTS ---
-        use_gtfs_fleet = self.config.get('fleet_settings', {}).get('use_gtfs_fleet_counts', True)
         fleet_settings = self.config.get('fleet_settings', {})
+        use_gtfs_fleet = fleet_settings.get('use_gtfs_fleet_counts', True)
+        manual_counts = fleet_settings.get('manual_agency_fleet_counts', {}) or {}
+        agencies_with_gtfs_vehicles = set()
 
         if use_gtfs_fleet and all_vehicle_frames:
             self.vehicles_df = pd.concat(all_vehicle_frames, ignore_index=True)
             grouped = self.vehicles_df.groupby(['scoped_agency_id', 'vehicle_type']).size().to_dict()
             for (agency_id, v_type), count in grouped.items():
-                self.fleet_counts[(agency_id, v_type)] = count
-        else:
-            manual_counts = fleet_settings.get('manual_agency_fleet_counts', {})
-            for agency_id, counts in manual_counts.items():
+                self.fleet_counts[(agency_id, v_type)] = int(count)
+                agencies_with_gtfs_vehicles.add(agency_id)
+
+        # Fallback to manual_agency_fleet_counts if disabled or agency missing from vehicles.txt
+        for agency_id, counts in manual_counts.items():
+            if not use_gtfs_fleet or agency_id not in agencies_with_gtfs_vehicles:
                 for v_type, count in counts.items():
-                    self.fleet_counts[(agency_id, v_type)] = count
+                    self.fleet_counts[(agency_id, v_type)] = int(count)
+
+        # Exact per-type overrides (works regardless of use_gtfs_fleet_counts)
+        exact_overrides = fleet_settings.get('fleet_count_overrides', {}) or {}
+        for agency_id, counts in exact_overrides.items():
+            if counts:
+                for v_type, exact_count in counts.items():
+                    self.fleet_counts[(agency_id, v_type)] = int(exact_count)
 
         reassignments = fleet_settings.get('reassign_agency_buses', []) or []
         for r in reassignments:

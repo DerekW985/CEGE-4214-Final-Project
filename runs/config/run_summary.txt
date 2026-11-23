@@ -1,0 +1,33 @@
+=================================================================
+ OPTIMIZATION RESULTS SUMMARY | Scenario: config
+=================================================================
+  Status               : OPTIMAL
+  Total Pipeline Time  : 17.53s (Gurobi: 7.35s)
+  Total Blocks Covered : 884
+  Total Buses Deployed : 475
+  Total Revenue Miles  : 63,250.16 mi
+  Total Deadhead Miles : 10,505.72 mi (14.24% of total miles)
+
+--- GARAGE CAPACITY & EV CHARGER UTILIZATION ---
+       garage_id  total_capacity_Q_g  ev_chargers_x_g  buses_stationed  blocks_assigned  revenue_miles  deadhead_miles  ev_buses_stationed  cap_util_%
+        Nicollet                 162               10               88              171        10480.8          1824.2                   8        54.3
+         Heywood                 214               15               74              144         8807.0          1338.9                   6        34.6
+      North_Loop                 216               20              134              244        17918.3          3824.0                  20        62.0
+      East_Metro                 198               10              105              195        14276.5          2357.0                   8        53.0
+    South_Garage                 123               12               74              130        11767.6          1161.7                   4        60.2
+    Eagan_Garage                 111                8                0                0            0.0             0.0                   0         0.0
+SouthWest_Garage                  85                5                0                0            0.0             0.0                   0         0.0
+         FT_Como                  59                0                0                0            0.0             0.0                   0         0.0
+   FT_Burnsville                  70                0                0                0            0.0             0.0                   0         0.0
+       FT_Spring                  40                0                0                0            0.0             0.0                   0         0.0
+
+--- FLEET DEPLOYMENT BY VEHICLE TYPE ---
+     vehicle_type  buses_used  blocks_covered  deadhead_miles
+         40ft_brt          18              34           519.2
+      40ft_diesel         261             524          5432.7
+    40ft_electric          30              65          1134.2
+       60ft_artic          61             117          1140.9
+   60ft_brt_artic          78              99          1325.3
+60ft_brt_electric          16              26           410.7
+            coach          11              19           542.7
+=================================================================
