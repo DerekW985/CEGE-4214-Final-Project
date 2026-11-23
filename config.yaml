@@ -124,7 +124,7 @@ garages:
 filters:
   keep_route_types: [3]               # GTFS route_type: 3 = Bus
   ignore_route_ids: ["901", "902"]    # Exclude LRT Lines 901/902
-  ignore_agency_ids: ["MT_1", "MT_2" "MT_4", "MT_6", "MT_10", "MT_11", "MVTA_0"]
+  ignore_agency_ids: ["MT_1", "MT_2", "MT_4", "MT_6", "MT_10", "MT_11", "MVTA_0"]
 
 # 5. Vehicle Types Defined for Model (Set V)
 vehicle_types:
