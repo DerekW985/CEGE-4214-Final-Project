@@ -24,10 +24,12 @@ def run_transit_optimization_pipeline(
     fleet_slack_penalty: Optional[float] = None,
     time_limit: float = 300.0,
     mip_gap: float = 0.005,
+    map_mode: str = "routes",
+    skip_dashboard: bool = False,
 ) -> dict:
     """
-    Runs the full GTFS parsing -> OSRM deadhead -> Gurobi optimization pipeline
-    for a specified config file and writes isolated outputs for that scenario.
+    Runs the full GTFS parsing -> OSRM deadhead -> Gurobi optimization -> Dashboard
+    pipeline for a specified config file and writes isolated outputs for that scenario.
     """
     t0 = time.time()
     cfg_file = Path(config_path)
@@ -50,7 +52,7 @@ def run_transit_optimization_pipeline(
     # ------------------------------------------------------------------
     # STEP 1: Parse GTFS Feeds, Fleet Counts & Garage Parameters
     # ------------------------------------------------------------------
-    print("[STEP 1/3] Parsing GTFS feeds, fleet roster, and garage specs...")
+    print("[STEP 1/4] Parsing GTFS feeds, fleet roster, and garage specs...")
     parser = MultiAgencyGTFSBlockParser(cfg_file)
     blocks_df = parser.process_all_feeds()
     gurobi_data = parser.get_gurobi_dict()
@@ -72,7 +74,7 @@ def run_transit_optimization_pipeline(
     # ------------------------------------------------------------------
     osrm_csv = run_dir / "osrm_deadhead_matrix.csv"
     if not skip_osrm:
-        print(f"[STEP 2/3] Generating OSRM deadhead matrix ({osrm_base_url})...")
+        print(f"[STEP 2/4] Generating OSRM deadhead matrix ({osrm_base_url})...")
         build_osrm_deadhead_matrix(
             endpoints_csv=endpoints_csv,
             garages_csv=garages_csv,
@@ -83,12 +85,12 @@ def run_transit_optimization_pipeline(
         )
         print()
     else:
-        print("[STEP 2/3] Skipping OSRM (--skip-osrm enabled; solver will use Haversine fallback).\n")
+        print("[STEP 2/4] Skipping OSRM (--skip-osrm enabled; solver will use Haversine fallback).\n")
 
     # ------------------------------------------------------------------
     # STEP 3: Solve Block-to-Garage MILP in Gurobi
     # ------------------------------------------------------------------
-    print("[STEP 3/3] Running Gurobi MILP optimization...")
+    print("[STEP 3/4] Running Gurobi MILP optimization...")
     results = solve_block_assignment(
         gurobi_data=gurobi_data,
         blocks_csv=blocks_csv,
@@ -105,13 +107,13 @@ def run_transit_optimization_pipeline(
 
     total_elapsed = round(time.time() - t0, 2)
 
-    # ------------------------------------------------------------------
-    # STEP 4: Generate Executive Summary Report
-    # ------------------------------------------------------------------
     if results["status"] == "INFEASIBLE":
         print(f"✖ Scenario '{scenario_name}' was INFEASIBLE (elapsed: {total_elapsed}s).")
         return results
 
+    # ------------------------------------------------------------------
+    # STEP 4: Generate Executive Summary Report & HTML Dashboard
+    # ------------------------------------------------------------------
     assignments_df = results["assignments_df"].copy()
     assignments_df["primary_route"] = assignments_df["primary_route"].astype(str)
     garage_summary_df = results["garage_summary_df"]
@@ -194,7 +196,6 @@ def run_transit_optimization_pipeline(
         .reset_index(drop=True)
     )
 
-    # Reorder columns cleanly for display and export
     route_garage_df = route_garage_df[
         [
             "scoped_agency_id",
@@ -241,7 +242,25 @@ def run_transit_optimization_pipeline(
     garage_report.to_csv(run_dir / "garage_capacity_utilization.csv", index=False)
     route_garage_df.to_csv(run_dir / "route_garage_breakdown.csv", index=False)
 
-    print(f"✔ All scenario outputs saved to: {run_dir.resolve()}")
+    # 4. Generate Interactive HTML Dashboard & Map
+    if not skip_dashboard:
+        print(f"[STEP 4/4] Generating interactive HTML dashboard (map_mode='{map_mode}')...")
+        try:
+            from visualize_scenario import generate_scenario_dashboard
+
+            dashboard_path = generate_scenario_dashboard(
+                run_dir=run_dir,
+                map_mode=map_mode,
+                config_path=cfg_file,
+            )
+            results["dashboard_path"] = str(dashboard_path.resolve())
+        except ImportError as exc:
+            print(f"  [WARN] Skipping dashboard generation (missing visualization dependency: {exc}).")
+            print("         Install with: pip install folium plotly")
+    else:
+        print("[STEP 4/4] Skipping HTML dashboard generation (--skip-dashboard enabled).")
+
+    print(f"\n✔ All scenario outputs saved to: {run_dir.resolve()}")
     return results
 
 
@@ -258,6 +277,18 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Optional scenario name for output folder (defaults to config filename)",
+    )
+    cli.add_argument(
+        "-m", "--map-mode",
+        type=str,
+        choices=["routes", "bus_types", "deadhead", "both"],
+        default="routes",
+        help="Initial Folium map layer mode: 'routes' (garage-colored), 'bus_types' (vehicle-type colored), 'deadhead', or 'both' (default: routes)",
+    )
+    cli.add_argument(
+        "--skip-dashboard",
+        action="store_true",
+        help="Skip generating dashboard.html, route_garage_map.html, and scenario_charts.html",
     )
     cli.add_argument(
         "--osrm-url",
@@ -299,6 +330,8 @@ if __name__ == "__main__":
     run_transit_optimization_pipeline(
         config_path=args.config,
         run_name=args.name,
+        map_mode=args.map_mode,
+        skip_dashboard=args.skip_dashboard,
         osrm_base_url=args.osrm_url,
         osrm_rate_limit_sec=args.rate_limit,
         skip_osrm=args.skip_osrm,
