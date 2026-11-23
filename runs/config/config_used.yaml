@@ -124,7 +124,7 @@ garages:
 filters:
   keep_route_types: [3]               # GTFS route_type: 3 = Bus
   ignore_route_ids: ["901", "902"]    # Exclude LRT Lines 901/902
-  ignore_agency_ids: ["MT_1", "MT_2", "MT_4", "MT_6", "MT_10", "MT_11", "MVTA_0"]
+  ignore_agency_ids: ["MT_1", "MT_2", "MT_4", "MT_5", "MT_6", "MT_10", "MT_11", "MVTA_0"]
 
 # 5. Vehicle Types Defined for Model (Set V)
 vehicle_types:
@@ -141,7 +141,7 @@ vehicle_types:
 
 # 6. Fleet Settings & Vehicles.txt Classification Rules
 fleet_settings:
-  use_gtfs_fleet_counts: true
+  use_gtfs_fleet_counts: false
 
   classification_keywords:
     "60ft_brt_electric":
@@ -183,19 +183,17 @@ fleet_settings:
 
   reassign_agency_buses: []
   additive_fleet_overrides:
-    "MT_2":
-      "40ft_diesel": 5
 
   manual_agency_fleet_counts:
     "MT_0":
-      "40ft_diesel": 300
-      "40ft_brt": 40
-      "60ft_artic": 100
-      "60ft_brt_artic": 50
-      "coach": 40
+      "40ft_diesel": 602
+      "40ft_brt": 50
+      "60ft_artic": 99
+      "60ft_brt_artic": 400
+      "coach": 25
       "40ft_electric": 20
-      "60ft_electric": 10
-      "60ft_brt_electric": 10
+      "60ft_electric": 0
+      "60ft_brt_electric": 13
     "MVTA_0":
       "40ft_diesel": 85
       "coach": 25
@@ -204,9 +202,83 @@ fleet_settings:
 default_vehicle_compatibility: ["40ft_diesel", "40ft_electric"]
 
 route_vehicle_overrides:
-  '5': ["60ft_brt_artic", "60ft_brt_electric"]
-  "C_LINE": ["60ft_brt_artic", "60ft_brt_electric"]
-  "D_LINE": ["60ft_brt_artic", "60ft_brt_electric"]
-  "A_LINE": ["40ft_brt", "60ft_brt_artic"]
+  "Gold_Line": ["60ft_brt_artic", "60ft_brt_electric"]
+  "905": ["60ft_brt_artic", "60ft_brt_electric"]
+  "Orange_Line": ["60ft_brt_artic", "60ft_brt_electric"]
+  "904": ["60ft_brt_artic", "60ft_brt_electric"]
+  "Red_Line": ["40ft_brt"]
+  "903": ["40ft_brt"]
+  "A_Line": ["40ft_brt"]
+  "921": ["40ft_brt"]
+  "B_Line": ["60ft_brt_artic", "60ft_brt_electric"]
+  "922": ["60ft_brt_artic", "60ft_brt_electric"]
+  "C_Line": ["60ft_brt_artic", "60ft_brt_electric"]
+  "923": ["60ft_brt_artic", "60ft_brt_electric"]
+  "D_Line": ["60ft_brt_artic", "60ft_brt_electric"]
+  "924": ["60ft_brt_artic", "60ft_brt_electric"]
+  "E_Line": ["60ft_brt_artic", "60ft_brt_electric"]
+  "925": ["60ft_brt_artic", "60ft_brt_electric"]
+  "2": ["40ft_diesel", "40ft_electric"]
+  "3": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "4": ["40ft_diesel", "40ft_electric"]
+  "5": ["40ft_diesel", "40ft_electric"]
+  "7": ["40ft_diesel", "40ft_electric"]
+  "9": ["40ft_diesel", "40ft_electric"]
+  "10": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "11": ["40ft_diesel", "40ft_electric"]
+  "14": ["40ft_diesel", "40ft_electric"]
+  "17": ["40ft_diesel", "40ft_electric"]
+  "18": ["40ft_diesel", "40ft_electric"]
+  "22": ["40ft_diesel", "40ft_electric"]
+  "27": ["40ft_diesel", "40ft_electric"]
+  "32": ["40ft_diesel", "40ft_electric"]
+  "36": ["40ft_diesel", "40ft_electric"]
+  "38": ["40ft_diesel", "40ft_electric"]
+  "44": ["40ft_diesel", "40ft_electric"]
+  "48": ["40ft_diesel", "40ft_electric"]
+  "54": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "61": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "62": ["40ft_diesel", "40ft_electric"]
+  "63": ["40ft_diesel", "40ft_electric"]
+  "64": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "67": ["40ft_diesel", "40ft_electric"]
+  "68": ["40ft_diesel", "40ft_electric"]
+  "74": ["40ft_diesel", "40ft_electric"]
+  "94": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "113": ["40ft_diesel", "40ft_electric"]
+  "114": ["40ft_diesel", "40ft_electric"]
+  "134": ["40ft_diesel", "40ft_electric"]
+  "156": ["40ft_diesel", "40ft_electric"]
+  "250": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "252": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "264": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "270": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "275": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "294": ["40ft_diesel", "40ft_electric"]
+  "355": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "363": ["40ft_diesel", "40ft_electric", "40ft_brt", "60ft_electric", "60ft_artic", "coach"]
+  "467": ["40ft_diesel", "40ft_electric", "40ft_brt", "60ft_electric", "60ft_artic", "coach"]
+  "515": ["40ft_diesel", "40ft_electric"]
+  "578": ["40ft_diesel", "40ft_electric"]
+  "645": ["40ft_diesel", "40ft_electric"]
+  "667": ["40ft_diesel", "40ft_electric"]
+  "673": ["40ft_diesel", "40ft_electric", "60ft_electric", "60ft_artic"]
+  "721": ["40ft_diesel", "40ft_electric"]
+  "722": ["40ft_diesel", "40ft_electric"]
+  "723": ["40ft_diesel", "40ft_electric"]
+  "724": ["40ft_diesel", "40ft_electric"]
+  "755": ["40ft_diesel", "40ft_electric"]
+  "760": ["40ft_diesel", "40ft_electric", "coach"]
+  "763": ["40ft_diesel", "40ft_electric"]
+  "764": ["40ft_diesel", "40ft_electric"]
+  "765": ["40ft_diesel", "40ft_electric", "40ft_brt", "60ft_artic", "60ft_electric"]
+  "766": ["40ft_diesel", "40ft_electric", "40ft_brt", "60ft_artic", "60ft_electric"]
+  "768": ["40ft_diesel", "40ft_electric", "40ft_brt", "60ft_artic", "60ft_electric"]
+  "824": ["40ft_diesel", "40ft_electric"]
+  "827": ["40ft_diesel", "40ft_electric"]
+  "850": ["40ft_diesel", "40ft_electric", "60ft_artic", "60ft_electric"]
+  "860": ["coach"]
+  "882": ["coach"]
+  "888": ["coach"]
 
 ev_max_block_miles: 150.0

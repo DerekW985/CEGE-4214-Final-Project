@@ -1,12 +1,12 @@
 feed_prefix,scoped_agency_id,agency_name,vehicle_type,bus_count
-MT,MT_0,Metro Transit,40ft_brt,22
-MT,MT_0,Metro Transit,40ft_diesel,717
-MT,MT_0,Metro Transit,40ft_electric,20
-MT,MT_0,Metro Transit,60ft_artic,147
-MT,MT_0,Metro Transit,60ft_brt_artic,116
-MT,MT_0,Metro Transit,60ft_brt_electric,10
-MT,MT_0,Metro Transit,coach,63
-MT,MT_2,Met Council (First Transit Contracted),40ft_diesel,45
+MT,MT_0,Metro Transit,40ft_brt,62
+MT,MT_0,Metro Transit,40ft_diesel,1317
+MT,MT_0,Metro Transit,40ft_electric,40
+MT,MT_0,Metro Transit,60ft_artic,247
+MT,MT_0,Metro Transit,60ft_brt_artic,166
+MT,MT_0,Metro Transit,60ft_brt_electric,20
+MT,MT_0,Metro Transit,coach,103
+MT,MT_2,Met Council (First Transit Contracted),40ft_diesel,40
 MT,MT_2,Met Council (First Transit Contracted),60ft_artic,2
 MT,MT_2,Met Council (First Transit Contracted),coach,3
 MT,MT_5,Plymouth,40ft_diesel,22
@@ -15,3 +15,4 @@ MT,MT_5,Plymouth,coach,6
 MT,MT_6,SouthWest Transit,40ft_diesel,6
 MT,MT_6,SouthWest Transit,60ft_artic,7
 MT,MT_6,SouthWest Transit,coach,44
+MT,MT_0,Metro Transit,60ft_electric,10
