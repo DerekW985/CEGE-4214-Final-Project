@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import folium
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import yaml
@@ -46,6 +47,13 @@ def _natural_route_sort_key(df: pd.DataFrame, col: str = "primary_route") -> pd.
     out["_num"] = pd.to_numeric(out[col], errors="coerce").fillna(999999)
     out = out.sort_values(by=["_num", col]).drop(columns=["_num"])
     return out
+
+
+def _format_gtfs_hour(hour_int: int) -> str:
+    """Formats an integer hour from midnight (supports >= 24 for post-midnight GTFS service)."""
+    if hour_int < 24:
+        return f"{hour_int:02d}:00"
+    return f"{hour_int:02d}:00 (+1d {hour_int - 24:02d}:00)"
 
 
 def _resolve_config_path(scenario_path: Path, config_override: Optional[Union[str, Path]] = None) -> Optional[Path]:
@@ -218,9 +226,25 @@ def _load_scenario_tables(run_dir: Path) -> Dict[str, pd.DataFrame]:
             )
 
     assignments_df = pd.read_csv(run_dir / "gurobi_solution_assignments.csv")
+    assignments_df["block_id"] = assignments_df["block_id"].astype(str)
     assignments_df["primary_route"] = assignments_df["primary_route"].astype(str)
     assignments_df["assigned_garage"] = assignments_df["assigned_garage"].astype(str)
     assignments_df["vehicle_type"] = assignments_df["vehicle_type"].astype(str)
+
+    # Ensure start_time and end_time exist (merge from gurobi_block_parameters.csv if needed)
+    blocks_param_path = run_dir / "gurobi_block_parameters.csv"
+    if (
+        ("start_time" not in assignments_df.columns or "end_time" not in assignments_df.columns)
+        and blocks_param_path.exists()
+    ):
+        bp_df = pd.read_csv(blocks_param_path, dtype={"block_id": str})
+        merge_cols = [
+            c
+            for c in ["block_id", "start_time", "end_time"]
+            if (c in bp_df.columns and c not in assignments_df.columns) or c == "block_id"
+        ]
+        if len(merge_cols) > 1:
+            assignments_df = assignments_df.merge(bp_df[merge_cols], on="block_id", how="left")
 
     garage_fleet_df = pd.read_csv(run_dir / "garage_fleet_summary.csv")
     garages_df = pd.read_csv(run_dir / "garage_parameters.csv")
@@ -302,6 +326,101 @@ def _load_scenario_tables(run_dir: Path) -> Dict[str, pd.DataFrame]:
         "garage_cap": garage_cap_df,
         "route_garage": route_garage_df,
         "route_vehicle": route_vehicle_df,
+    }
+
+
+def _compute_hourly_dispatch_profile(assignments_df: pd.DataFrame) -> Dict[str, object]:
+    """
+    Computes hourly active buses in service (by garage and total) plus hourly garage
+    pull-out (departures) and pull-in (returns) counts across the operating day.
+    """
+    if "start_time" not in assignments_df.columns or "end_time" not in assignments_df.columns:
+        return {
+            "hours": [],
+            "hour_labels": [],
+            "garages": [],
+            "active_by_garage": {},
+            "active_total": [],
+            "pull_outs_total": [],
+            "pull_ins_total": [],
+            "po_garage_breakdown": [],
+            "pi_garage_breakdown": [],
+        }
+
+    df = assignments_df.dropna(subset=["start_time", "end_time"]).copy()
+    df["start_time"] = df["start_time"].astype(float)
+    df["end_time"] = df["end_time"].astype(float)
+
+    if df.empty:
+        return {
+            "hours": [],
+            "hour_labels": [],
+            "garages": [],
+            "active_by_garage": {},
+            "active_total": [],
+            "pull_outs_total": [],
+            "pull_ins_total": [],
+            "po_garage_breakdown": [],
+            "pi_garage_breakdown": [],
+        }
+
+    min_hr = int(np.floor(df["start_time"].min() / 60.0))
+    max_hr = int(np.ceil(df["end_time"].max() / 60.0))
+    hours = list(range(min_hr, max(max_hr, min_hr + 1)))
+    hour_labels = [_format_gtfs_hour(h) for h in hours]
+
+    garages = sorted(df["assigned_garage"].unique())
+    df["po_hour"] = np.floor(df["start_time"] / 60.0).astype(int)
+    df["pi_hour"] = np.floor(df["end_time"] / 60.0).astype(int)
+
+    active_by_garage: Dict[str, List[int]] = {g: [] for g in garages}
+    active_total: List[int] = []
+    pull_outs_total: List[int] = []
+    pull_ins_total: List[int] = []
+    po_garage_breakdown: List[str] = []
+    pi_garage_breakdown: List[str] = []
+
+    for h in hours:
+        h_start = h * 60.0
+        h_end = (h + 1) * 60.0
+
+        # Active in service at any point during [h_start, h_end)
+        active_mask = (df["start_time"] < h_end) & (df["end_time"] > h_start)
+        active_sub = df[active_mask]
+        active_total.append(int(len(active_sub)))
+
+        g_active_counts = active_sub["assigned_garage"].value_counts().to_dict()
+        for g in garages:
+            active_by_garage[g].append(int(g_active_counts.get(g, 0)))
+
+        # Pull-outs (garage departures) during hour h
+        po_sub = df[df["po_hour"] == h]
+        pull_outs_total.append(int(len(po_sub)))
+        if po_sub.empty:
+            po_garage_breakdown.append("None")
+        else:
+            po_counts = po_sub["assigned_garage"].value_counts()
+            po_garage_breakdown.append(", ".join(f"{g}: {cnt}" for g, cnt in po_counts.items()))
+
+        # Pull-ins (garage returns) during hour h
+        pi_sub = df[df["pi_hour"] == h]
+        pull_ins_total.append(int(len(pi_sub)))
+        if pi_sub.empty:
+            pi_garage_breakdown.append("None")
+        else:
+            pi_counts = pi_sub["assigned_garage"].value_counts()
+            pi_garage_breakdown.append(", ".join(f"{g}: {cnt}" for g, cnt in pi_counts.items()))
+
+    return {
+        "hours": hours,
+        "hour_labels": hour_labels,
+        "garages": garages,
+        "active_by_garage": active_by_garage,
+        "active_total": active_total,
+        "pull_outs_total": pull_outs_total,
+        "pull_ins_total": pull_ins_total,
+        "po_garage_breakdown": po_garage_breakdown,
+        "pi_garage_breakdown": pi_garage_breakdown,
     }
 
 
@@ -706,11 +825,13 @@ def build_plotly_charts(
     output_html: Path,
 ) -> go.Figure:
     """
-    Builds a 3-panel interactive Plotly figure:
+    Builds a 4-panel interactive Plotly figure:
       1. Garage Capacity & Fleet Mix (Stacked Bar + Capacity Limit Markers)
       2. EV Charger Capacity vs. Stationed Electric Buses
       3. Route-to-Garage Assignments (Stacked Bar with Block Count / 100% Share Toggle)
+      4. Hourly Active Buses in Service (by Garage) & Pull-Out / Pull-In Dispatch Peaks
     """
+    assignments_df = tables["assignments"]
     garage_fleet_df = tables["garage_fleet"]
     garage_cap_df = tables["garage_cap"].copy()
     route_garage_df = _natural_route_sort_key(tables["route_garage"], "primary_route")
@@ -721,14 +842,21 @@ def build_plotly_charts(
     garages_ordered = garage_cap_df["garage_id"].tolist()
 
     fig = make_subplots(
-        rows=3,
+        rows=4,
         cols=1,
-        row_heights=[0.28, 0.22, 0.50],
-        vertical_spacing=0.10,
+        row_heights=[0.22, 0.16, 0.36, 0.26],
+        vertical_spacing=0.08,
+        specs=[
+            [{"secondary_y": False}],
+            [{"secondary_y": False}],
+            [{"secondary_y": False}],
+            [{"secondary_y": True}],
+        ],
         subplot_titles=(
             "1. Garage Fleet Allocation by Vehicle Type vs. Total Bay Capacity",
             "2. EV Charger Availability vs. Stationed Electric Fleet",
             "3. Route-to-Garage Block Assignments (Use Dropdown to Toggle Count vs. % Share)",
+            "4. Hourly Active Buses in Service & Garage Pull-Out / Pull-In Peaks Across the Day",
         ),
     )
 
@@ -859,6 +987,147 @@ def build_plotly_charts(
     blocks_arrays = [fig.data[idx].meta["blocks"] for idx in rg_trace_indices]
     shares_arrays = [fig.data[idx].meta["shares"] for idx in rg_trace_indices]
 
+    # ------------------------------------------------------------------
+    # PANEL 4: Hourly Active Buses in Service & Pull-Out / Pull-In Peaks
+    # ------------------------------------------------------------------
+    dispatch = _compute_hourly_dispatch_profile(assignments_df)
+    hour_labels = dispatch["hour_labels"]
+
+    if hour_labels:
+        # Stacked area traces showing active buses in service per garage
+        for g_id in dispatch["garages"]:
+            g_col = garage_colors.get(g_id, "#333333")
+            fig.add_trace(
+                go.Scatter(
+                    name=f"Active: {g_id}",
+                    x=hour_labels,
+                    y=dispatch["active_by_garage"][g_id],
+                    mode="lines",
+                    stackgroup="active_buses",
+                    line=dict(width=0.8, color=g_col),
+                    fillcolor=g_col,
+                    legendgroup="dispatch",
+                    legendgrouptitle_text="Hourly Service & Dispatch",
+                    showlegend=False,
+                    hovertemplate=(
+                        "<b>%{x}</b><br>"
+                        f"Active ({g_id}): " + "%{y} buses<extra></extra>"
+                    ),
+                ),
+                row=4,
+                col=1,
+                secondary_y=False,
+            )
+
+        # Bold total active buses line on top of stacked area
+        fig.add_trace(
+            go.Scatter(
+                name="Total Active Buses in Service",
+                x=hour_labels,
+                y=dispatch["active_total"],
+                mode="lines+markers",
+                line=dict(width=2.5, color="#0f172a"),
+                marker=dict(size=5, color="#0f172a"),
+                legendgroup="dispatch",
+                legendgrouptitle_text="Hourly Service & Dispatch",
+                hovertemplate="<b>%{x}</b><br>Total Active in Service: <b>%{y} buses</b><extra></extra>",
+            ),
+            row=4,
+            col=1,
+            secondary_y=False,
+        )
+
+        # Secondary Y-axis: Hourly Pull-Outs (Departures) & Pull-Ins (Returns)
+        fig.add_trace(
+            go.Scatter(
+                name="Pull-Outs (Garage Departures/hr)",
+                x=hour_labels,
+                y=dispatch["pull_outs_total"],
+                mode="lines+markers",
+                line=dict(width=2.6, color="#16a34a"),
+                marker=dict(symbol="triangle-up", size=8, color="#16a34a"),
+                customdata=dispatch["po_garage_breakdown"],
+                legendgroup="dispatch",
+                hovertemplate=(
+                    "<b>%{x} — Pull-Outs</b><br>"
+                    "Total Departures: <b>%{y} buses</b><br>"
+                    "By Garage: %{customdata}<extra></extra>"
+                ),
+            ),
+            row=4,
+            col=1,
+            secondary_y=True,
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                name="Pull-Ins (Garage Returns/hr)",
+                x=hour_labels,
+                y=dispatch["pull_ins_total"],
+                mode="lines+markers",
+                line=dict(width=2.6, color="#dc2626", dash="dash"),
+                marker=dict(symbol="triangle-down", size=8, color="#dc2626"),
+                customdata=dispatch["pi_garage_breakdown"],
+                legendgroup="dispatch",
+                hovertemplate=(
+                    "<b>%{x} — Pull-Ins</b><br>"
+                    "Total Returns: <b>%{y} buses</b><br>"
+                    "By Garage: %{customdata}<extra></extra>"
+                ),
+            ),
+            row=4,
+            col=1,
+            secondary_y=True,
+        )
+
+        # Annotate Peak Active Service, Peak Pull-Out, and Peak Pull-In hours
+        peak_active_idx = int(np.argmax(dispatch["active_total"]))
+        peak_po_idx = int(np.argmax(dispatch["pull_outs_total"]))
+        peak_pi_idx = int(np.argmax(dispatch["pull_ins_total"]))
+
+        fig.add_annotation(
+            x=hour_labels[peak_active_idx],
+            y=dispatch["active_total"][peak_active_idx],
+            xref="x4",
+            yref="y4",
+            text=f"Peak Service: {dispatch['active_total'][peak_active_idx]} buses",
+            showarrow=True,
+            arrowhead=2,
+            ax=0,
+            ay=-26,
+            font=dict(size=10, color="#0f172a"),
+            bgcolor="rgba(255,255,255,0.88)",
+            bordercolor="#0f172a",
+        )
+        fig.add_annotation(
+            x=hour_labels[peak_po_idx],
+            y=dispatch["pull_outs_total"][peak_po_idx],
+            xref="x4",
+            yref="y5",
+            text=f"Peak Pull-Out: {dispatch['pull_outs_total'][peak_po_idx]}/hr",
+            showarrow=True,
+            arrowhead=2,
+            ax=28,
+            ay=-22,
+            font=dict(size=10, color="#15803d"),
+            bgcolor="rgba(255,255,255,0.88)",
+            bordercolor="#16a34a",
+        )
+        fig.add_annotation(
+            x=hour_labels[peak_pi_idx],
+            y=dispatch["pull_ins_total"][peak_pi_idx],
+            xref="x4",
+            yref="y5",
+            text=f"Peak Pull-In: {dispatch['pull_ins_total'][peak_pi_idx]}/hr",
+            showarrow=True,
+            arrowhead=2,
+            ax=-28,
+            ay=-22,
+            font=dict(size=10, color="#b91c1c"),
+            bgcolor="rgba(255,255,255,0.88)",
+            bordercolor="#dc2626",
+        )
+
     fig.update_layout(
         title=dict(
             text=f"Multi-Agency Transit Block Optimization — Scenario: {scenario_name}",
@@ -867,15 +1136,15 @@ def build_plotly_charts(
         ),
         barmode="stack",
         template="plotly_white",
-        height=1250,
-        margin=dict(t=110, b=60, l=60, r=40),
-        legend=dict(tracegroupgap=14),
+        height=1600,
+        margin=dict(t=110, b=75, l=65, r=65),
+        legend=dict(tracegroupgap=12),
         updatemenus=[
             dict(
                 type="buttons",
                 direction="right",
                 x=0.98,
-                y=0.47,
+                y=0.56,
                 xanchor="right",
                 yanchor="bottom",
                 bgcolor="#f4f6f8",
@@ -906,6 +1175,16 @@ def build_plotly_charts(
     fig.update_yaxes(title_text="EV Buses / Chargers", row=2, col=1)
     fig.update_yaxes(title_text="Blocks Assigned", row=3, col=1)
     fig.update_xaxes(title_text="Route ID", tickangle=-45, type="category", row=3, col=1)
+
+    fig.update_yaxes(title_text="Active Buses in Service", row=4, col=1, secondary_y=False)
+    fig.update_yaxes(
+        title_text="Hourly Pull-Outs / Pull-Ins",
+        row=4,
+        col=1,
+        secondary_y=True,
+        showgrid=False,
+    )
+    fig.update_xaxes(title_text="Hour of Service Day", tickangle=-35, type="category", row=4, col=1)
 
     fig.write_html(str(output_html), include_plotlyjs="cdn")
     return fig
