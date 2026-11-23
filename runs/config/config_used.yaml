@@ -193,15 +193,11 @@ fleet_settings:
 
   # Exact count overrides (works even if use_gtfs_fleet_counts is switched back to true)
   fleet_count_overrides:
-    "MT_0":
-      "60ft_brt_artic": 117
-      "40ft_brt": 22
 
   reassign_agency_buses: []
 
   additive_fleet_overrides:
-    "MT_2":
-      "40ft_diesel": 5
+
 
   manual_agency_fleet_counts:
     "MT_0":
@@ -213,9 +209,6 @@ fleet_settings:
       "40ft_electric": 20
       "60ft_electric": 0
       "60ft_brt_electric": 13
-    "MVTA_0":
-      "40ft_diesel": 85
-      "coach": 25
 
 # 7. Route-to-Vehicle Compatibility Rules (BRT Routes require BRT Fleet)
 default_vehicle_compatibility: ["40ft_diesel", "40ft_electric"]

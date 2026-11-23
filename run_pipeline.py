@@ -112,11 +112,12 @@ def run_transit_optimization_pipeline(
         print(f"✖ Scenario '{scenario_name}' was INFEASIBLE (elapsed: {total_elapsed}s).")
         return results
 
-    assignments_df = results["assignments_df"]
+    assignments_df = results["assignments_df"].copy()
+    assignments_df["primary_route"] = assignments_df["primary_route"].astype(str)
     garage_summary_df = results["garage_summary_df"]
     garages_df = pd.read_csv(garages_csv)
 
-    # Aggregate garage-level utilization (total capacity & EV charger usage)
+    # 1. Aggregate garage-level utilization (total capacity & EV charger usage)
     stationed_by_garage = (
         garage_summary_df.groupby("garage_id")
         .agg(
@@ -150,6 +151,7 @@ def run_transit_optimization_pipeline(
     garage_report["deadhead_miles"] = garage_report["deadhead_miles"].round(1)
     garage_report["revenue_miles"] = garage_report["revenue_miles"].round(1)
 
+    # 2. Fleet deployment by vehicle type
     fleet_by_type = (
         garage_summary_df.groupby("vehicle_type")
         .agg(
@@ -160,6 +162,51 @@ def run_transit_optimization_pipeline(
         .reset_index()
     )
     fleet_by_type["deadhead_miles"] = fleet_by_type["deadhead_miles"].round(1)
+
+    # 3. Route-to-garage assignment breakdown (blocks & % share per route)
+    route_garage_df = (
+        assignments_df.groupby(["scoped_agency_id", "primary_route", "assigned_garage"])
+        .agg(
+            blocks_assigned=("block_id", "count"),
+            deadhead_miles=("deadhead_miles", "sum"),
+            vehicle_types=("vehicle_type", lambda s: "|".join(sorted(set(s.astype(str))))),
+        )
+        .reset_index()
+    )
+    route_garage_df["route_total_blocks"] = route_garage_df.groupby(
+        ["scoped_agency_id", "primary_route"]
+    )["blocks_assigned"].transform("sum")
+    route_garage_df["route_share_%"] = (
+        (route_garage_df["blocks_assigned"] / route_garage_df["route_total_blocks"]) * 100
+    ).round(1)
+    route_garage_df["deadhead_miles"] = route_garage_df["deadhead_miles"].round(1)
+
+    # Natural sort: numeric route IDs first (2, 3, 10...), then named routes (A_Line, Gold_Line...)
+    route_garage_df["_sort_num"] = pd.to_numeric(
+        route_garage_df["primary_route"], errors="coerce"
+    ).fillna(999999)
+    route_garage_df = (
+        route_garage_df.sort_values(
+            by=["scoped_agency_id", "_sort_num", "primary_route", "blocks_assigned"],
+            ascending=[True, True, True, False],
+        )
+        .drop(columns=["_sort_num"])
+        .reset_index(drop=True)
+    )
+
+    # Reorder columns cleanly for display and export
+    route_garage_df = route_garage_df[
+        [
+            "scoped_agency_id",
+            "primary_route",
+            "assigned_garage",
+            "blocks_assigned",
+            "route_total_blocks",
+            "route_share_%",
+            "deadhead_miles",
+            "vehicle_types",
+        ]
+    ]
 
     dh_pct = round(
         (results["total_deadhead_miles"] / max(results["total_revenue_miles"] + results["total_deadhead_miles"], 1e-6)) * 100,
@@ -182,6 +229,9 @@ def run_transit_optimization_pipeline(
         "",
         "--- FLEET DEPLOYMENT BY VEHICLE TYPE ---",
         fleet_by_type.to_string(index=False),
+        "",
+        "--- ROUTE-TO-GARAGE ASSIGNMENT BREAKDOWN ---",
+        route_garage_df.to_string(index=False),
         "=================================================================",
     ]
     report_text = "\n".join(report_lines)
@@ -189,6 +239,7 @@ def run_transit_optimization_pipeline(
 
     (run_dir / "run_summary.txt").write_text(report_text, encoding="utf-8")
     garage_report.to_csv(run_dir / "garage_capacity_utilization.csv", index=False)
+    route_garage_df.to_csv(run_dir / "route_garage_breakdown.csv", index=False)
 
     print(f"✔ All scenario outputs saved to: {run_dir.resolve()}")
     return results

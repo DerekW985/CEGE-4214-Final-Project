@@ -2,7 +2,7 @@
  OPTIMIZATION RESULTS SUMMARY | Scenario: config
 =================================================================
   Status               : OPTIMAL
-  Total Pipeline Time  : 17.53s (Gurobi: 7.35s)
+  Total Pipeline Time  : 17.89s (Gurobi: 7.27s)
   Total Blocks Covered : 884
   Total Buses Deployed : 475
   Total Revenue Miles  : 63,250.16 mi
@@ -30,4 +30,137 @@ SouthWest_Garage                  85                5                0          
    60ft_brt_artic          78              99          1325.3
 60ft_brt_electric          16              26           410.7
             coach          11              19           542.7
+
+--- ROUTE-TO-GARAGE ASSIGNMENT BREAKDOWN ---
+scoped_agency_id primary_route assigned_garage  blocks_assigned  route_total_blocks  route_share_%  deadhead_miles                                 vehicle_types
+            MT_0             2        Nicollet               15                  26           57.7            69.4                                   40ft_diesel
+            MT_0             2         Heywood               10                  26           38.5            44.4                                   40ft_diesel
+            MT_0             2      North_Loop                1                  26            3.8             7.8                                   40ft_diesel
+            MT_0             3      North_Loop               16                  36           44.4           110.9                        40ft_diesel|60ft_artic
+            MT_0             3      East_Metro               10                  36           27.8            82.4          40ft_diesel|40ft_electric|60ft_artic
+            MT_0             3         Heywood               10                  36           27.8            71.7                        40ft_diesel|60ft_artic
+            MT_0             4    South_Garage               14                  24           58.3           116.2                                   40ft_diesel
+            MT_0             4         Heywood                5                  24           20.8            49.6                     40ft_diesel|40ft_electric
+            MT_0             4        Nicollet                5                  24           20.8            67.1                     40ft_diesel|40ft_electric
+            MT_0             5      North_Loop                4                   8           50.0            57.6                     40ft_diesel|40ft_electric
+            MT_0             5        Nicollet                3                   8           37.5            27.4                                   40ft_diesel
+            MT_0             5    South_Garage                1                   8           12.5             7.3                                   40ft_diesel
+            MT_0             7    South_Garage               12                  18           66.7            50.0          40ft_diesel|40ft_electric|60ft_artic
+            MT_0             7      North_Loop                5                  18           27.8            52.0          40ft_diesel|40ft_electric|60ft_artic
+            MT_0             7        Nicollet                1                  18            5.6             9.1                                   40ft_diesel
+            MT_0             9        Nicollet               12                  14           85.7           128.7                                   40ft_diesel
+            MT_0             9         Heywood                1                  14            7.1             7.2                                   40ft_diesel
+            MT_0             9      North_Loop                1                  14            7.1            15.8                                   40ft_diesel
+            MT_0            10      North_Loop               19                  28           67.9           267.0 40ft_brt|40ft_diesel|40ft_electric|60ft_artic
+            MT_0            10         Heywood                8                  28           28.6            40.5               40ft_brt|40ft_diesel|60ft_artic
+            MT_0            10        Nicollet                1                  28            3.6            10.3                                 40ft_electric
+            MT_0            11        Nicollet               21                  30           70.0           126.8                     40ft_diesel|40ft_electric
+            MT_0            11      North_Loop                6                  30           20.0           101.3            40ft_brt|40ft_diesel|40ft_electric
+            MT_0            11         Heywood                2                  30            6.7            14.0                                   40ft_diesel
+            MT_0            11    South_Garage                1                  30            3.3             9.0                                   40ft_diesel
+            MT_0            14      North_Loop               12                  22           54.5           166.5                     40ft_diesel|40ft_electric
+            MT_0            14    South_Garage                8                  22           36.4            47.2                        40ft_diesel|60ft_artic
+            MT_0            14         Heywood                1                  22            4.5             7.3                                   40ft_diesel
+            MT_0            14        Nicollet                1                  22            4.5             9.6                                   40ft_diesel
+            MT_0            17        Nicollet               11                  27           40.7           110.2                                   40ft_diesel
+            MT_0            17         Heywood                9                  27           33.3            91.5                                   40ft_diesel
+            MT_0            17      North_Loop                7                  27           25.9            75.8                                   40ft_diesel
+            MT_0            18        Nicollet               10                  21           47.6           115.8                                   40ft_diesel
+            MT_0            18         Heywood                5                  21           23.8            33.5                        40ft_diesel|60ft_artic
+            MT_0            18    South_Garage                5                  21           23.8            47.3                                   40ft_diesel
+            MT_0            18      North_Loop                1                  21            4.8            19.2                                   40ft_diesel
+            MT_0            22      North_Loop               11                  21           52.4           172.2                     40ft_diesel|40ft_electric
+            MT_0            22    South_Garage                8                  21           38.1            72.9                                   40ft_diesel
+            MT_0            22      East_Metro                1                  21            4.8            11.6                                   40ft_diesel
+            MT_0            22         Heywood                1                  21            4.8            10.0                                   40ft_diesel
+            MT_0            27        Nicollet                2                   3           66.7            10.5                                   40ft_diesel
+            MT_0            27      East_Metro                1                   3           33.3            12.0                                   40ft_diesel
+            MT_0            32      North_Loop                9                  12           75.0           101.9                                   40ft_diesel
+            MT_0            32         Heywood                3                  12           25.0            40.4                                   40ft_diesel
+            MT_0            36        Nicollet                6                  11           54.5            51.8                     40ft_diesel|40ft_electric
+            MT_0            36    South_Garage                5                  11           45.5            51.7                                   40ft_diesel
+            MT_0            38        Nicollet               18                  19           94.7           293.3                     40ft_diesel|40ft_electric
+            MT_0            38      North_Loop                1                  19            5.3            17.9                                 40ft_electric
+            MT_0            48         Heywood                5                   6           83.3            36.2                                   40ft_diesel
+            MT_0            48      North_Loop                1                   6           16.7             9.2                                   40ft_diesel
+            MT_0            54    South_Garage               21                  27           77.8           135.0                        40ft_diesel|60ft_artic
+            MT_0            54      East_Metro                6                  27           22.2            77.8                        40ft_diesel|60ft_artic
+            MT_0            61         Heywood               11                  20           55.0            71.1                        40ft_diesel|60ft_artic
+            MT_0            61      East_Metro                8                  20           40.0            70.3          40ft_diesel|40ft_electric|60ft_artic
+            MT_0            61      North_Loop                1                  20            5.0            12.7                                    60ft_artic
+            MT_0            62      East_Metro               13                  13          100.0           127.8          40ft_diesel|40ft_electric|60ft_artic
+            MT_0            63      East_Metro               15                  25           60.0           168.1                                   40ft_diesel
+            MT_0            63        Nicollet               10                  25           40.0           127.0                                   40ft_diesel
+            MT_0            64      East_Metro               27                  27          100.0           270.5          40ft_diesel|40ft_electric|60ft_artic
+            MT_0            67        Nicollet               10                  13           76.9            77.4                                   40ft_diesel
+            MT_0            67      East_Metro                2                  13           15.4            23.0                                   40ft_diesel
+            MT_0            67         Heywood                1                  13            7.7             4.5                                   40ft_diesel
+            MT_0            68      East_Metro               26                  26          100.0           246.4          40ft_diesel|40ft_electric|60ft_artic
+            MT_0            74      East_Metro               27                  27          100.0           356.2          40ft_diesel|40ft_electric|60ft_artic
+            MT_0            94      East_Metro                7                  15           46.7            72.1                        40ft_diesel|60ft_artic
+            MT_0            94         Heywood                6                  15           40.0            14.4                        40ft_diesel|60ft_artic
+            MT_0            94      North_Loop                2                  15           13.3            26.2                                    60ft_artic
+            MT_0           113        Nicollet                3                   5           60.0            26.5                                   40ft_diesel
+            MT_0           113         Heywood                1                   5           20.0            13.1                                 40ft_electric
+            MT_0           113    South_Garage                1                   5           20.0            11.9                                   40ft_diesel
+            MT_0           114        Nicollet                6                   6          100.0            37.8                     40ft_diesel|40ft_electric
+            MT_0           134         Heywood                2                   3           66.7            23.9                                   40ft_diesel
+            MT_0           134    South_Garage                1                   3           33.3             9.1                                   40ft_diesel
+            MT_0           156        Nicollet                4                   4          100.0            29.5                                   40ft_diesel
+            MT_0           250      North_Loop               10                  13           76.9           180.0          40ft_diesel|40ft_electric|60ft_artic
+            MT_0           250         Heywood                3                  13           23.1            27.5                      40ft_electric|60ft_artic
+            MT_0           252         Heywood                3                   3          100.0            60.8          40ft_diesel|40ft_electric|60ft_artic
+            MT_0           264         Heywood                3                   3          100.0            30.8                        40ft_diesel|60ft_artic
+            MT_0           270         Heywood                6                   9           66.7            93.9                        40ft_diesel|60ft_artic
+            MT_0           270      East_Metro                3                   9           33.3            31.6                        40ft_diesel|60ft_artic
+            MT_0           275      East_Metro                6                   6          100.0           121.4                     40ft_diesel|40ft_electric
+            MT_0           294      East_Metro                1                   1          100.0            21.1                                    60ft_artic
+            MT_0           355      East_Metro                9                  10           90.0           148.5          40ft_diesel|40ft_electric|60ft_artic
+            MT_0           355         Heywood                1                  10           10.0            16.4                                 40ft_electric
+            MT_0           363      East_Metro                5                   5          100.0           127.6    40ft_diesel|40ft_electric|60ft_artic|coach
+            MT_0           467        Nicollet                7                   8           87.5           153.3            40ft_brt|40ft_diesel|40ft_electric
+            MT_0           467         Heywood                1                   8           12.5            20.4                                         coach
+            MT_0           515    South_Garage               14                  15           93.3            72.1                                   40ft_diesel
+            MT_0           515      North_Loop                1                  15            6.7            21.0                                   40ft_diesel
+            MT_0           578        Nicollet                4                   4          100.0            52.1                     40ft_diesel|40ft_electric
+            MT_0           645         Heywood               12                  12          100.0           160.9                     40ft_diesel|40ft_electric
+            MT_0           667         Heywood                2                   4           50.0            26.8                                   40ft_diesel
+            MT_0           667        Nicollet                2                   4           50.0            21.6                                   40ft_diesel
+            MT_0           673         Heywood                6                   6          100.0            54.4                        40ft_diesel|60ft_artic
+            MT_0           721      North_Loop                4                   4          100.0            66.6                                   40ft_diesel
+            MT_0           722      North_Loop                4                   4          100.0            85.1                                   40ft_diesel
+            MT_0           723      North_Loop                4                   4          100.0            82.5                     40ft_diesel|40ft_electric
+            MT_0           724      North_Loop               13                  14           92.9           273.1                     40ft_diesel|40ft_electric
+            MT_0           724         Heywood                1                  14            7.1            14.4                                   40ft_diesel
+            MT_0           755         Heywood                4                   7           57.1            27.2                                   40ft_diesel
+            MT_0           755      North_Loop                3                   7           42.9            43.5                     40ft_diesel|40ft_electric
+            MT_0           760      North_Loop                4                   4          100.0            39.4                             40ft_diesel|coach
+            MT_0           763      North_Loop                2                   2          100.0            21.5                                   40ft_diesel
+            MT_0           764      North_Loop                2                   3           66.7            29.8                                   40ft_diesel
+            MT_0           764         Heywood                1                   3           33.3             2.8                                   40ft_diesel
+            MT_0           766      North_Loop                5                   5          100.0           111.7          40ft_diesel|40ft_electric|60ft_artic
+            MT_0           768      North_Loop                7                   9           77.8           102.5 40ft_brt|40ft_diesel|40ft_electric|60ft_artic
+            MT_0           768         Heywood                2                   9           22.2            12.6                        40ft_diesel|60ft_artic
+            MT_0           824      North_Loop                4                   4          100.0            51.6                     40ft_diesel|40ft_electric
+            MT_0           827      North_Loop                5                   8           62.5            61.9                                   40ft_diesel
+            MT_0           827         Heywood                3                   8           37.5             9.5                                   40ft_diesel
+            MT_0           850      North_Loop               10                  10          100.0           133.0 40ft_brt|40ft_diesel|40ft_electric|60ft_artic
+            MT_0           860      East_Metro                2                   3           66.7            53.2                                         coach
+            MT_0           860         Heywood                1                   3           33.3            20.6                                   40ft_diesel
+            MT_0           882      North_Loop                6                   6          100.0           253.4                           40ft_electric|coach
+            MT_0           888      North_Loop               10                  10          100.0           264.6                                         coach
+            MT_0           903    South_Garage                5                   5          100.0            72.7                                      40ft_brt
+            MT_0           904    South_Garage               15                  23           65.2           279.7              60ft_brt_artic|60ft_brt_electric
+            MT_0           904         Heywood                8                  23           34.8           137.3              60ft_brt_artic|60ft_brt_electric
+            MT_0           905      East_Metro               10                  10          100.0           133.5                                60ft_brt_artic
+            MT_0           921        Nicollet               19                  21           90.5           269.0                                      40ft_brt
+            MT_0           921         Heywood                2                  21            9.5            34.6                                      40ft_brt
+            MT_0           922      East_Metro               16                  19           84.2           201.9              60ft_brt_artic|60ft_brt_electric
+            MT_0           922      North_Loop                3                  19           15.8            37.2                                60ft_brt_artic
+            MT_0           923      North_Loop               12                  16           75.0           125.5              60ft_brt_artic|60ft_brt_electric
+            MT_0           923         Heywood                4                  16           25.0            15.1                                60ft_brt_artic
+            MT_0           924      North_Loop               14                  21           66.7           253.8              60ft_brt_artic|60ft_brt_electric
+            MT_0           924    South_Garage                7                  21           33.3            28.6                                60ft_brt_artic
+            MT_0           925      North_Loop               24                  36           66.7           372.4              60ft_brt_artic|60ft_brt_electric
+            MT_0           925    South_Garage               12                  36           33.3           151.0              60ft_brt_artic|60ft_brt_electric
 =================================================================
