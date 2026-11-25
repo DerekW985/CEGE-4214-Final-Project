@@ -1,7 +1,8 @@
 # Multi-Agency Transit Garage & Fleet Optimization Pipeline
-# This readme created with the help of Gemini AI
 
 A GTFS-to-Gurobi Mixed-Integer Linear Programming (MILP) pipeline that parses multi-agency transit schedules, computes real-world road deadhead distances via OSRM, assigns vehicle blocks to garages and bus types to minimize deadhead and fleet costs, and generates interactive HTML maps and dashboards.
+
+This readme created with the help of Gemini AI
 
 ---
 
