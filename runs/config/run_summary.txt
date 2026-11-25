@@ -2,7 +2,7 @@
  OPTIMIZATION RESULTS SUMMARY | Scenario: config
 =================================================================
   Status               : OPTIMAL
-  Total Pipeline Time  : 17.61s (Gurobi: 7.44s)
+  Total Pipeline Time  : 130.14s (Gurobi: 11.08s)
   Total Blocks Covered : 884
   Total Buses Deployed : 472
   Total Revenue Miles  : 63,250.16 mi
